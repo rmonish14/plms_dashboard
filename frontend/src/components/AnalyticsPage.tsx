@@ -28,9 +28,9 @@ export default function AnalyticsPage() {
           id: e.id,
           node_id: e.device_id || e.node_id,
           event_category: e.status || e.event_category || 'UNKNOWN_ANOMALY',
-          aqi: e.aqi || (e.pm25 ? Math.round(e.pm25 * 2.5) : 0),
-          pm2_5: e.pm25 || e.pm2_5 || 0,
-          co2_ppm: e.co2 || e.co2_ppm || 0,
+          vib: e.vib || (e.pm25 ? e.pm25 / 10 : 0),
+          temp: e.temp || e.temperature || 0,
+          current: e.current || e.co2 || 0,
           timestamp: e.created_at || e.timestamp
         }));
         setEvents(mappedData);
@@ -40,9 +40,9 @@ export default function AnalyticsPage() {
         console.error('Failed to fetch events from PostgreSQL', err);
         // Fallback UI data if PG is not reachable
         setEvents([{
-          id: 'demo-1', node_id: 'alpha-001', event_category: 'CRITICAL_AQI_SPIKE', aqi: 185, pm2_5: 90, timestamp: new Date(Date.now() - 3600000).toISOString()
+          id: 'demo-1', node_id: 'machine-alpha', event_category: 'CRITICAL_VIBRATION', vib: 12.5, temp: 85, timestamp: new Date(Date.now() - 3600000).toISOString()
         }, {
-          id: 'demo-2', node_id: 'worker_01_john', event_category: 'HAZARDOUS_GAS_DETECTED', aqi: 80, co2_ppm: 1400, timestamp: new Date(Date.now() - 7200000).toISOString()
+          id: 'demo-2', node_id: 'machine-beta', event_category: 'OVERCURRENT_DETECTED', current: 45.2, temp: 65, timestamp: new Date(Date.now() - 7200000).toISOString()
         }]);
         setIsLoading(false);
       });
@@ -61,8 +61,8 @@ export default function AnalyticsPage() {
   // Prepare scatter data
   const scatterData = events.map(e => ({
     x: new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' }),
-    y: e.aqi || e.co2_ppm / 10 || 100, // normalized y axis for visual spread
-    z: e.aqi ? e.aqi * 2 : 100, // bubble size
+    y: e.vib || e.temp / 10 || 10, // normalized y axis for visual spread
+    z: e.vib ? e.vib * 20 : 100, // bubble size
     name: e.node_id,
     category: e.event_category,
     raw: e
@@ -98,15 +98,15 @@ export default function AnalyticsPage() {
         {/* Summary KPIs */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="glass-card rounded-xl p-5 border-l-4 border-l-destructive/50">
-            <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-2 flex flex-row items-center gap-1.5"><AlertOctagon className="w-3.5 h-3.5" /> Critical AQI Spikes</p>
-            <p className="text-2xl font-mono font-semibold text-red-500">{events.filter(e => String(e.event_category).includes('AQI') || String(e.event_category).includes('PM25')).length}</p>
+            <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-2 flex flex-row items-center gap-1.5"><AlertOctagon className="w-3.5 h-3.5" /> High Vibration Alerts</p>
+            <p className="text-2xl font-mono font-semibold text-red-500">{events.filter(e => String(e.event_category).includes('VIB')).length}</p>
           </div>
           <div className="glass-card rounded-xl p-5 border-l-4 border-l-orange-500/50">
-            <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-2 flex flex-row items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> Hazardous Gas Hits</p>
-            <p className="text-2xl font-mono font-semibold text-orange-500">{events.filter(e => String(e.event_category).includes('GAS') || String(e.event_category).includes('CO')).length}</p>
+            <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-2 flex flex-row items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> Overcurrent Events</p>
+            <p className="text-2xl font-mono font-semibold text-orange-500">{events.filter(e => String(e.event_category).includes('CURRENT') || String(e.event_category).includes('TEMP')).length}</p>
           </div>
           <div className="glass-card rounded-xl p-5 border-l-4 border-l-yellow-500/50">
-            <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-2 flex flex-row items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Offline Blackouts</p>
+            <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-2 flex flex-row items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Sensor Faults</p>
             <p className="text-2xl font-mono font-semibold text-yellow-500">{events.filter(e => String(e.event_category).includes('OFFLINE')).length}</p>
           </div>
         </motion.div>
@@ -176,11 +176,11 @@ export default function AnalyticsPage() {
                           <div className="bg-card border border-border p-3 rounded-lg shadow-xl text-xs max-w-[200px]">
                             <p className="font-bold text-foreground mb-1">{d.node_id}</p>
                             <p className={cn("text-[9px] font-mono tracking-wider px-1.5 py-0.5 inline-block rounded uppercase mb-2", 
-                              (d.event_category || '').includes('AQI') ? 'bg-red-500/20 text-red-500' : 'bg-orange-500/20 text-orange-500'
+                              (d.event_category || '').includes('VIB') ? 'bg-red-500/20 text-red-500' : 'bg-orange-500/20 text-orange-500'
                             )}>{d.event_category}</p>
                             <div className="grid grid-cols-2 gap-2 mt-1">
-                              <div><span className="text-muted-foreground block text-[9px]">AQI</span> <span className="font-mono">{d.aqi || '--'}</span></div>
-                              <div><span className="text-muted-foreground block text-[9px]">CO2</span> <span className="font-mono">{d.co2_ppm || '--'}</span></div>
+                              <div><span className="text-muted-foreground block text-[9px]">Vibration</span> <span className="font-mono">{d.vib || '--'}</span></div>
+                              <div><span className="text-muted-foreground block text-[9px]">Current</span> <span className="font-mono">{d.current || '--'}</span></div>
                             </div>
                           </div>
                         );
@@ -208,8 +208,8 @@ export default function AnalyticsPage() {
                   <th className="px-5 py-3 font-semibold">Timestamp</th>
                   <th className="px-5 py-3 font-semibold">Node Origin</th>
                   <th className="px-5 py-3 font-semibold">Anomaly Category</th>
-                  <th className="px-5 py-3 font-semibold text-right">AQI</th>
-                  <th className="px-5 py-3 font-semibold text-right">CO₂ (ppm)</th>
+                  <th className="px-5 py-3 font-semibold text-right">Vib (mm/s)</th>
+                  <th className="px-5 py-3 font-semibold text-right">Current (A)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -226,8 +226,8 @@ export default function AnalyticsPage() {
                          {e.event_category}
                        </span>
                     </td>
-                    <td className="px-5 py-4 font-mono text-right font-medium">{e.aqi || '—'}</td>
-                    <td className="px-5 py-4 font-mono text-right text-muted-foreground">{e.co2_ppm || '—'}</td>
+                    <td className="px-5 py-4 font-mono text-right font-medium">{e.vib || '—'}</td>
+                    <td className="px-5 py-4 font-mono text-right text-muted-foreground">{e.current || '—'}</td>
                   </tr>
                 ))}
                 {events.length === 0 && !isLoading && (

@@ -43,15 +43,15 @@ export default function DatabasePage() {
       .catch(() => {
         console.warn("Backend unavailable, loading mocked database interface.");
         setOverview({
-          database: 'aqms_production',
+          database: 'plms_production',
           size: '42.8 MB',
           tables: [
-            { name: 'sensor_telemetry', rowCount: 142589 },
+            { name: 'plms_critical_events', rowCount: 142589 },
             { name: 'active_alerts', rowCount: 23 },
             { name: 'personnel_logs', rowCount: 841 }
           ]
         });
-        setActiveTable('sensor_telemetry');
+        setActiveTable('plms_critical_events');
         setLoading(false);
       });
   }, []);
@@ -75,21 +75,21 @@ export default function DatabasePage() {
         let rows = [];
         let columns: {name: string, type: string}[] = [];
         
-        if (activeTable === 'sensor_telemetry') {
+        if (activeTable === 'plms_critical_events') {
            columns = [
              { name: 'id', type: 'integer' },
              { name: 'nodeId', type: 'character varying' },
-             { name: 'aqi', type: 'integer' },
-             { name: 'pm25', type: 'double precision' },
-             { name: 'co2', type: 'integer' },
+             { name: 'vib', type: 'double precision' },
+             { name: 'current', type: 'double precision' },
+             { name: 'temperature', type: 'double precision' },
              { name: 'timestamp', type: 'timestamp without time zone' }
            ];
            rows = [
-             { id: 1, nodeId: 'alpha-001', aqi: 108, pm25: 38.2, co2: 820, timestamp: new Date().toISOString() },
-             { id: 2, nodeId: 'beta-002',  aqi: 42,  pm25: 11.5, co2: 415, timestamp: new Date(Date.now() - 3000).toISOString() },
-             { id: 3, nodeId: 'gamma-003', aqi: 185, pm25: 88.0, co2: 1180, timestamp: new Date(Date.now() - 15000).toISOString() },
-             { id: 4, nodeId: 'worker_01', aqi: 22,  pm25: 5.1,  co2: 400, timestamp: new Date(Date.now() - 25000).toISOString() },
-             { id: 5, nodeId: 'alpha-001', aqi: 110, pm25: 39.0, co2: 825, timestamp: new Date(Date.now() - 30000).toISOString() }
+             { id: 1, nodeId: 'machine-alpha-001', vib: 5.2, current: 28.2, temperature: 65, timestamp: new Date().toISOString() },
+             { id: 2, nodeId: 'machine-beta-002',  vib: 1.5, current: 11.5, temperature: 45, timestamp: new Date(Date.now() - 3000).toISOString() },
+             { id: 3, nodeId: 'machine-gamma-003', vib: 8.0, current: 35.0, temperature: 80, timestamp: new Date(Date.now() - 15000).toISOString() },
+             { id: 4, nodeId: 'spares_01_motor', vib: 2.1,  current: 15.1,  temperature: 40, timestamp: new Date(Date.now() - 25000).toISOString() },
+             { id: 5, nodeId: 'machine-alpha-001', vib: 5.0, current: 29.0, temperature: 64, timestamp: new Date(Date.now() - 30000).toISOString() }
            ];
         } else if (activeTable === 'active_alerts') {
            columns = [
@@ -100,8 +100,8 @@ export default function DatabasePage() {
              { name: 'resolved', type: 'boolean' }
            ];
            rows = [
-             { id: 101, nodeId: 'alpha-001', message: 'PM2.5 elevated above 35', severity: 'warning', resolved: false },
-             { id: 102, nodeId: 'gamma-003', message: 'Node offline', severity: 'critical', resolved: false }
+             { id: 101, nodeId: 'machine-alpha-001', message: 'Vibration elevated above 5 mm/s', severity: 'warning', resolved: false },
+             { id: 102, nodeId: 'machine-gamma-003', message: 'Node offline', severity: 'critical', resolved: false }
            ];
         } else {
            columns = [

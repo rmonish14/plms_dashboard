@@ -10,7 +10,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT * FROM devices ORDER BY created_at DESC'
+      'SELECT * FROM plms_devices ORDER BY created_at DESC'
     );
     res.json(rows);
   } catch (err) {
@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT * FROM devices WHERE device_id = $1',
+      'SELECT * FROM plms_devices WHERE device_id = $1',
       [req.params.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: 'Device not found' });
@@ -44,7 +44,7 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/events', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT * FROM critical_events
+      `SELECT * FROM plms_critical_events
        WHERE device_id = $1
        ORDER BY created_at DESC
        LIMIT 100`,
@@ -64,7 +64,7 @@ router.get('/:id/events', async (req, res) => {
 router.get('/fleet/anomalies', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT * FROM critical_events
+      `SELECT * FROM plms_critical_events
        WHERE created_at >= NOW() - INTERVAL '24 hours'
        ORDER BY created_at DESC`
     );
@@ -86,7 +86,7 @@ router.post('/', async (req, res) => {
 
   try {
     const { rows } = await pool.query(
-      `INSERT INTO devices (device_id, location)
+      `INSERT INTO plms_devices (device_id, location)
        VALUES ($1, $2)
        ON CONFLICT (device_id) DO UPDATE SET location = EXCLUDED.location
        RETURNING *`,

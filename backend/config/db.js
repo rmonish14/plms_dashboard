@@ -59,6 +59,40 @@ const initSchema = async () => {
     )
     ON CONFLICT (key) DO NOTHING;
 
+    -- 5. PLMS: Registered predictive machines
+    CREATE TABLE IF NOT EXISTS plms_devices (
+      id         SERIAL PRIMARY KEY,
+      device_id  VARCHAR(100) UNIQUE NOT NULL,
+      location   TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- 6. PLMS: Critical predictive events
+    CREATE TABLE IF NOT EXISTS plms_critical_events (
+      id          SERIAL PRIMARY KEY,
+      device_id   VARCHAR(100) NOT NULL,
+      vib         FLOAT,
+      current     FLOAT,
+      temperature FLOAT,
+      humidity    FLOAT,
+      status      VARCHAR(50),
+      created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- 7. PLMS: System config
+    CREATE TABLE IF NOT EXISTS plms_system_config (
+      key        VARCHAR(100) PRIMARY KEY,
+      value      JSONB        NOT NULL DEFAULT '{}',
+      updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+    );
+
+    INSERT INTO plms_system_config (key, value)
+    VALUES (
+      'plms_system_settings',
+      '{"thresholds":{"vib":5,"current":20,"temp":60,"hum":50},"alertEmail":""}'
+    )
+    ON CONFLICT (key) DO NOTHING;
+
     -- 4. Application users
     CREATE TABLE IF NOT EXISTS users (
       id         SERIAL PRIMARY KEY,

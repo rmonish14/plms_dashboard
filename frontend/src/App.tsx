@@ -26,7 +26,7 @@ import { cn } from "./lib/utils";
 const NAV_ITEMS = [
   { id: "dashboard",   label: "Overview",    icon: LayoutDashboard },
   { id: "map",         label: "Live Topology", icon: Map             },
-  { id: "workers",     label: "Field Personnel",icon: Users          },
+  { id: "workers",     label: "Maintenance & Repairs",icon: Users    },
   { id: "analytics",  label: "Data Warehouse", icon: BarChart3       },
   { id: "predictive",  label: "Predictive AI", icon: BrainCircuit    },
   { id: "database",    label: "Database",      icon: Database        },
@@ -65,7 +65,7 @@ export default function App() {
   const [liveStatus, setLiveStatus] = useState<Record<string, any>>({});
 
   // ── Alert thresholds (shared with AI + SettingsPage) ─────────────────────
-  const [thresholds, setThresholds] = useState({ aqi: 150, pm25: 35, co: 9, co2: 1000 });
+  const [thresholds, setThresholds] = useState({ vib: 5.0, temp: 60, hum: 50, current: 20 });
   const [alertEmail, setAlertEmail] = useState('');
 
   // ── Sync Settings with Backend ────────────────────────────────────────────
@@ -124,16 +124,14 @@ export default function App() {
         ...prev,
         [data.nodeId]: {
           nodeId:      data.nodeId,
-          aqi:         Math.round((data.pm25 ?? 0) * 2.5),
-          pm2_5:       data.pm25        ?? 0,
-          pm10:        data.pm10        ?? 0,
-          co:          data.co          ?? 0,
-          co2:         data.co2         ?? 0,
-          temperature: data.temperature ?? 0,
-          humidity:    data.humidity    ?? 0,
+          vib:         data.vib         ?? 0,
+          temp:        data.temp        ?? 0,
+          hum:         data.hum         ?? 0,
+          current:     data.current     ?? 0,
           lat:         data.lat,
           long:        data.long,
           relay:       data.relay,       // 'ON' | 'OFF' from ESP firmware
+          ml_status:   data.ml_status,
           timestamp:   data.timestamp,
         }
       }));
@@ -153,23 +151,23 @@ export default function App() {
       // Seed mock data for AI context when backend is unreachable
       if (Object.keys(liveNodes).length === 0) {
         setLiveNodes({
-          "alpha-001": { nodeId: "alpha-001", aqi: 108, pm2_5: 38, pm10: 55, co: 1.8, co2: 820, temperature: 24, humidity: 48 },
-          "beta-002":  { nodeId: "beta-002",  aqi:  42, pm2_5: 11, pm10: 18, co: 0.4, co2: 415, temperature: 21, humidity: 55 },
-          "gamma-003": { nodeId: "gamma-003", aqi: 185, pm2_5: 88, pm10: 115, co: 4.9, co2: 1180, temperature: 29, humidity: 31 },
-          "worker_01_john": { nodeId: "worker_01_john", aqi: 45, pm2_5: 12, pm10: 20, co: 1.1, co2: 600, temperature: 36.5, humidity: 45 },
-          "worker_02_sarah": { nodeId: "worker_02_sarah", aqi: 135, pm2_5: 45, pm10: 60, co: 3.2, co2: 850, temperature: 36.8, humidity: 55 },
+          "machine-alpha": { nodeId: "machine-alpha", vib: 2.1, temp: 45, hum: 40, current: 15.2 },
+          "machine-beta":  { nodeId: "machine-beta",  vib: 6.5, temp: 72, hum: 48, current: 22.4 },
+          "machine-gamma": { nodeId: "machine-gamma", vib: 1.2, temp: 38, hum: 35, current: 12.1 },
+          "spares-01":     { nodeId: "spares-01",     vib: 0.5, temp: 25, hum: 30, current: 0.5  },
+          "spares-02":     { nodeId: "spares-02",     vib: 4.8, temp: 58, hum: 45, current: 19.8 },
         });
         setLiveStatus({
-          "alpha-001": { status: "online"  },
-          "beta-002":  { status: "online"  },
-          "gamma-003": { status: "offline" },
-          "worker_01_john": { status: "online" },
-          "worker_02_sarah": { status: "online" },
+          "machine-alpha": { status: "online"  },
+          "machine-beta":  { status: "online"  },
+          "machine-gamma": { status: "offline" },
+          "spares-01":     { status: "online" },
+          "spares-02":     { status: "online" },
         });
         setAlerts(prev => prev.length === 0 ? [
-          { id: "1", nodeId: "alpha-001", message: "PM2.5 elevated above 35 µg/m³ — moderate air quality warning.", severity: "warning",  timestamp: new Date().toISOString() },
-          { id: "2", nodeId: "gamma-003", message: "Node offline — no heartbeat received for >5 minutes.",          severity: "critical", timestamp: new Date(Date.now() - 300000).toISOString() },
-          { id: "3", nodeId: "beta-002",  message: "CO₂ within safe operational range.",                            severity: "info",     timestamp: new Date(Date.now() - 60000).toISOString() },
+          { id: "1", nodeId: "machine-beta", message: "Vibration elevated above 5 mm/s — predictive maintenance recommended.", severity: "warning",  timestamp: new Date().toISOString() },
+          { id: "2", nodeId: "machine-gamma", message: "Node offline — no heartbeat received for >5 minutes.",          severity: "critical", timestamp: new Date(Date.now() - 300000).toISOString() },
+          { id: "3", nodeId: "machine-alpha",  message: "Current draw within safe operational range.",                            severity: "info",     timestamp: new Date(Date.now() - 60000).toISOString() },
         ] : prev);
       }
     });
@@ -220,8 +218,8 @@ export default function App() {
             <Wind className="w-4 h-4 text-primary-foreground" />
           </div>
           <div className="leading-none">
-            <p className="text-sm font-semibold text-foreground tracking-tight">AQMS</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Monitoring System</p>
+            <p className="text-sm font-semibold text-foreground tracking-tight">PLMS</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Predictive Life Monitoring</p>
           </div>
         </div>
 
@@ -285,7 +283,7 @@ export default function App() {
               {NAV_ITEMS.find(n => n.id === activeTab)?.label}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Air Quality Monitoring System · Real-time SCADA
+              Predictive Life Monitoring System · Machine Health Dashboard
             </p>
           </div>
 

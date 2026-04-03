@@ -68,18 +68,15 @@ export default function NodeCard({ data, status, history }: NodeCardProps) {
   }, [data.nodeId]);
 
   // Zero-out metrics if hardware is disconnected
-  const aqi = isOffline ? 0 : (data.aqi ?? 0);
-  const pm2_5 = isOffline ? 0 : data.pm2_5;
-  const pm10  = isOffline ? 0 : data.pm10;
-  const co    = isOffline ? 0 : data.co;
-  const co2   = isOffline ? 0 : data.co2;
-  const temp  = isOffline ? 0 : data.temperature;
-  const hum   = isOffline ? 0 : data.humidity;
+  const vib = isOffline ? 0 : data.vib;
+  const temp  = isOffline ? 0 : data.temp;
+  const hum   = isOffline ? 0 : data.hum;
+  const current = isOffline ? 0 : data.current;
 
-  const aqiMeta = aqi <= 50  ? { label: 'Good',      color: 'text-primary',    bg: 'bg-primary/10',    border: 'border-primary/20'    }
-               :  aqi <= 100 ? { label: 'Moderate',   color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' }
-               :  aqi <= 150 ? { label: 'Sensitive',  color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' }
-               :               { label: 'Unhealthy',  color: 'text-destructive', bg: 'bg-destructive/10', border: 'border-destructive/20' };
+  const vibMeta = vib <= 2  ? { label: 'Healthy',      color: 'text-primary',    bg: 'bg-primary/10',    border: 'border-primary/20'    }
+               :  vib <= 5 ? { label: 'Normal',   color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' }
+               :  vib <= 8 ? { label: 'Warning',  color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' }
+               :               { label: 'Critical',  color: 'text-destructive', bg: 'bg-destructive/10', border: 'border-destructive/20' };
 
   const handleShare = async () => {
     setIsSharing(true);
@@ -90,7 +87,7 @@ export default function NodeCard({ data, status, history }: NodeCardProps) {
         body: JSON.stringify({
           recipientEmail: shareEmail.trim() || undefined,
           message: shareMessage,
-          nodeData: { id: data.nodeId, aqi, status: status?.status }
+          nodeData: { id: data.nodeId, vib, status: status?.status }
         })
       });
       setShareSuccess(true);
@@ -141,9 +138,9 @@ export default function NodeCard({ data, status, history }: NodeCardProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* AQI Badge */}
-          <div className={cn("status-badge", aqiMeta.bg, aqiMeta.border, aqiMeta.color)}>
-            AQI {aqi} · {aqiMeta.label}
+          {/* VIB Badge */}
+          <div className={cn("status-badge", vibMeta.bg, vibMeta.border, vibMeta.color)}>
+            VIB {vib} · {vibMeta.label}
           </div>
           {/* Share Button */}
           <button 
@@ -162,10 +159,10 @@ export default function NodeCard({ data, status, history }: NodeCardProps) {
         {/* Primary metrics table */}
         <div className="grid grid-cols-2 gap-px bg-border rounded-lg overflow-hidden border border-border">
           {[
-            { label: 'PM 2.5', value: pm2_5, unit: 'µg/m³' },
-            { label: 'PM 10',  value: pm10,  unit: 'µg/m³' },
-            { label: 'CO',     value: co,    unit: 'ppm'   },
-            { label: 'CO₂',    value: co2,   unit: 'ppm'   },
+            { label: 'Vibration', value: vib, unit: 'mm/s' },
+            { label: 'Current',  value: current,  unit: 'A' },
+            { label: 'Temp',     value: temp,    unit: '°C'   },
+            { label: 'Humidity',    value: hum,   unit: '%'   },
           ].map(({ label, value, unit }) => (
             <div key={label} className="bg-card px-4 py-3">
               <p className="text-[10px] font-medium text-muted-foreground mb-1">{label}</p>
@@ -200,14 +197,14 @@ export default function NodeCard({ data, status, history }: NodeCardProps) {
         <div className="border-t border-border pt-3">
           <div className="flex items-center justify-between mb-2">
             <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1.5">
-              <Activity className="w-3 h-3" /> AQI Trend
+              <Activity className="w-3 h-3" /> Vibration Trend
             </p>
             <span className="text-[10px] text-muted-foreground font-mono">2 min</span>
           </div>
           <LiveChart
             data={history}
-            dataKey="aqi"
-            color={aqi > 150 ? 'var(--color-destructive)' : 'var(--color-primary)'}
+            dataKey="vib"
+            color={vib > 8 ? 'var(--color-destructive)' : 'var(--color-primary)'}
           />
         </div>
         {/* ── Relay Control Panel ── */}

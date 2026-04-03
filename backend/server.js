@@ -65,7 +65,7 @@ io.on('connection', (socket) => {
       console.warn('[WS] Invalid relay_control payload — missing nodeId');
       return;
     }
-    const topic = `aqms/${nodeId}/control`;
+    const topic = `plms/${nodeId}/control`;
     // Forward both state and mode so ESP can switch between AUTO and MANUAL
     const payload = JSON.stringify({
       relay: state || 'OFF',
@@ -100,21 +100,21 @@ mqttClient.on('connect', () => {
   console.log(`[MQTT] ✅ Connected to broker at ${MQTT_BROKER}`);
 
   // Subscribe to all sensor data topics (ESP32 + simulator)
-  mqttClient.subscribe('aqms/+/data', { qos: 1 }, (err) => {
+  mqttClient.subscribe('plms/+/data', { qos: 1 }, (err) => {
     if (err) console.error('[MQTT] Subscribe error (data):', err);
-    else      console.log('[MQTT] Subscribed → aqms/+/data');
+    else      console.log('[MQTT] Subscribed → plms/+/data');
   });
 
   // Subscribe to device status heartbeats
-  mqttClient.subscribe('aqms/+/status', { qos: 0 }, (err) => {
+  mqttClient.subscribe('plms/+/status', { qos: 0 }, (err) => {
     if (err) console.error('[MQTT] Subscribe error (status):', err);
-    else      console.log('[MQTT] Subscribed → aqms/+/status');
+    else      console.log('[MQTT] Subscribed → plms/+/status');
   });
 
   // Subscribe to relay control ACK topic (ESP acknowledges command)
-  mqttClient.subscribe('aqms/+/control/ack', { qos: 0 }, (err) => {
+  mqttClient.subscribe('plms/+/control/ack', { qos: 0 }, (err) => {
     if (err) console.error('[MQTT] Subscribe error (control/ack):', err);
-    else      console.log('[MQTT] Subscribed → aqms/+/control/ack');
+    else      console.log('[MQTT] Subscribed → plms/+/control/ack');
   });
 });
 
@@ -124,7 +124,7 @@ mqttClient.on('error',     (err) => console.error('[MQTT] Connection error:', er
 // Route every incoming MQTT message through the dedicated handler module
 mqttClient.on('message', async (topic, message) => {
   try {
-    await handleMessage(topic, message, io);
+    await handleMessage(topic, message, io, mqttClient);
   } catch (err) {
     console.error('[MQTT] Unhandled message error:', err.message);
   }

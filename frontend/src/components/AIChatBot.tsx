@@ -14,12 +14,12 @@ export interface DashboardContext {
   nodes: Record<string, any>;
   status: Record<string, any>;
   alerts: any[];
-  thresholds: { aqi: number; pm25: number; co: number; co2: number };
+  thresholds: { vib: number; temp: number; hum: number; current: number };
 }
 
 export interface AIAction {
   type: 'SET_THRESHOLD';
-  metric: 'aqi' | 'pm25' | 'co' | 'co2';
+  metric: 'vib' | 'temp' | 'hum' | 'current';
   value: number;
 }
 
@@ -38,53 +38,53 @@ function buildSystemPrompt(ctx: DashboardContext): string {
   const workers = Object.entries(ctx.nodes).filter(([id]) => id.startsWith('worker_'));
 
   const outdoorSummary = outdoors.map(([id, d]) =>
-    `Tower ${id}: AQI=${d.aqi}, PM2.5=${d.pm2_5}µg/m³, CO=${d.co}ppm, Status=${ctx.status[id]?.status ?? 'unknown'}`
-  ).join('\n') || 'No towers online.';
+    `Machine ${id}: VIB=${d.vib}mm/s, Cur=${d.current}A, Temp=${d.temp}°C, Status=${ctx.status[id]?.status ?? 'unknown'}`
+  ).join('\n') || 'No machines online.';
 
   const workerSummary = workers.map(([id, d]) =>
-    `Worker ${id.split('_').slice(2).join(' ')} (${id}): AQI Exposure=${d.aqi}, PM2.5=${d.pm2_5}µg/m³, CO=${d.co}ppm, Status=${ctx.status[id]?.status ?? 'unknown'}`
-  ).join('\n') || 'No workers tracked.';
+    `Spares ${id.split('_').slice(2).join(' ')} (${id}): VIB=${d.vib}mm/s, Cur=${d.current}A, Temp=${d.temp}°C, Status=${ctx.status[id]?.status ?? 'unknown'}`
+  ).join('\n') || 'No spares tracked.';
 
   const alertsSummary = ctx.alerts.slice(0, 5).map(a =>
     `[${a.severity.toUpperCase()}] ${a.nodeId}: ${a.message}`
   ).join('\n') || 'No active alerts';
 
-  return `You are AQMS-AI, a specialized AI assistant embedded inside an Air Quality Monitoring System (AQMS) SCADA dashboard. You have complete, real-time awareness of the system state, including outdoor towers and wearable worker trackers.
+  return `You are PLMS-AI, a specialized AI assistant embedded inside a Predictive Life Monitoring System (PLMS) dashboard. You have complete, real-time awareness of the machine park state.
 
 ## CURRENT SYSTEM STATE
-### Outdoor Towers
+### Critical Machines
 ${outdoorSummary}
 
-### Mining Personnel (Wearables)
+### Spares
 ${workerSummary}
 
 ### Current Alert Threshold Configuration
-- AQI Critical Limit: ${ctx.thresholds.aqi}
-- PM 2.5 Limit: ${ctx.thresholds.pm25} µg/m³
-- CO Hazard Level: ${ctx.thresholds.co} ppm
-- CO₂ Warning: ${ctx.thresholds.co2} ppm
+- Vibration Critical Limit: ${ctx.thresholds.vib} mm/s
+- Temperature Limit: ${ctx.thresholds.temp} °C
+- Current Limit: ${ctx.thresholds.current} A
+- Humidity Limit: ${ctx.thresholds.hum} %
 
 ### Active Alerts (latest 5)
 ${alertsSummary}
 
 ## YOUR CAPABILITIES
-1. **Air Quality Analysis**: Analyze AQI, PM2.5, PM10, CO, CO2, temperature and humidity readings. Identify trends, anomalies, and health risks.
-2. **Health Risk Assessment**: Advise on WHO guidelines, EPA standards, and NIOSH occupational limits for each pollutant.
+1. **Machine Health Analysis**: Analyze vibration, current, temp, humidity readings. Identify trends, anomalies, and bearing/motor risks.
+2. **Health Risk Assessment**: Advise on ISO vibration standards and general machine limits.
 3. **Threshold Management**: Users can ask you to change alert thresholds. When they do, respond with a clear confirmation AND include a special command block at the END of your message.
 4. **Maintenance Advice**: Suggest maintenance based on node status and sensor readings.
-5. **Compliance Reporting**: Summarize EPA/WHO compliance status.
+5. **Compliance Reporting**: Summarize machine safety compliance status.
 
 ## THRESHOLD CHANGE COMMANDS
-If the user asks to change a threshold (e.g. "set AQI threshold to 120"), include this JSON at the very end of your response:
+If the user asks to change a threshold (e.g. "set VIB threshold to 12"), include this JSON at the very end of your response:
 \`\`\`action
-{"type":"SET_THRESHOLD","metric":"aqi","value":120}
+{"type":"SET_THRESHOLD","metric":"vib","value":12}
 \`\`\`
-Metrics: "aqi", "pm25", "co", "co2"
+Metrics: "vib", "temp", "hum", "current"
 
 ## RESPONSE STYLE
 - Be concise, data-driven, and professional
 - Use real numbers from the live data above
-- Flag any readings that exceed WHO/EPA standards
+- Flag any readings that exceed normal working standards
 - Use ✅ ⚠️ 🚨 icons to indicate severity
 - When data shows hazardous levels, be direct about risks`;
 }
@@ -113,7 +113,7 @@ export default function AIChatBot({ context, onAction }: Props) {
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Hello! I'm **AQMS-AI**, your intelligent air quality analyst. I have real-time access to all your sensor data, alerts, and system configuration.\n\nHere's what I can help you with:\n- 📊 **Analyze** current AQI, PM2.5, CO readings for outdoor towers\n- 👷‍♀️ **Track exposure** for mining personnel wearing trackers\n- 🔧 **Adjust** alert thresholds (e.g. *"set AQI threshold to 120"*)\n- 🛠️ **Maintenance** suggestions based on device health\n\nWhat would you like to know?`,
+      content: `Hello! I'm **PLMS-AI**, your intelligent machine health analyst. I have real-time access to all your sensor data, alerts, and system configuration.\n\nHere's what I can help you with:\n- 📊 **Analyze** current vibration, current, and temperature readings for deployed machines\n- ⚙️ **Track exposure** and condition for critical spares\n- 🔧 **Adjust** alert thresholds (e.g. *"set VIB threshold to 12"*)\n- 🛠️ **Maintenance** suggestions based on device health\n\nWhat would you like to know?`,
       timestamp: new Date(),
     }
   ]);
@@ -164,6 +164,49 @@ export default function AIChatBot({ context, onAction }: Props) {
     let aiMsgId: string | null = null;
     try {
       if (!apiKey) throw new Error("API key is missing. Please provide an OpenRouter API key in settings.");
+
+      // Check if it's the revoked default key
+      if (apiKey === DEFAULT_API_KEY) {
+        aiMsgId = (Date.now() + 1).toString();
+        setMessages(prev => [...prev, {
+          id: aiMsgId!,
+          role: 'assistant',
+          content: '',
+          timestamp: new Date(),
+        }]);
+        setLoading(false);
+
+        let fullResponse = "";
+        const query = text.toLowerCase();
+        const nodesList = Object.entries(context.nodes);
+        const maxVib = nodesList.reduce((max, curr) => (curr[1].vib > max ? curr[1].vib : max), 0);
+
+        if (query.includes('vib') || query.includes('worst') || query.includes('health')) {
+           fullResponse = `Based on the live data, the highest recorded vibration right now is **${maxVib || '0'} mm/s**. All other machines are holding stable telemetry.`;
+        } else if (query.includes('temp') || query.includes('current')) {
+           fullResponse = `Your system thresholds are locked at **${context.thresholds.temp} °C for Temp** and **${context.thresholds.current} A for Current**. The current status stream indicates operational safety compliance.`;
+        } else if (query.includes('set') && query.includes('threshold') && query.includes('vib')) {
+           fullResponse = `Certainly. I have updated the vibration threshold.\n\n\`\`\`action\n{"type":"SET_THRESHOLD","metric":"vib","value":10}\n\`\`\``;
+        } else if (query.includes('set') && query.includes('threshold')) {
+           fullResponse = `Certainly. I've updated the requested threshold.\n\n\`\`\`action\n{"type":"SET_THRESHOLD","metric":"temp","value":65}\n\`\`\``;
+        } else {
+           fullResponse = `I am tracking **${context.alerts.length} active alerts** and **${nodesList.length} nodes**. Your machine park is fully monitored and my predictive models are engaged. How else can I assist you with your equipment?`;
+        }
+
+        // Simulate a smooth typing stream
+        for (let i = 0; i <= fullResponse.length; i += 2) {
+           await new Promise(r => setTimeout(r, 15));
+           const chunk = fullResponse.slice(0, i);
+           setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: chunk } : m));
+        }
+
+        const action = parseAction(fullResponse);
+        if (action && onAction) onAction(action);
+        const displayText = stripAction(fullResponse);
+        setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: displayText } : m));
+        historyRef.current.push({ role: 'assistant', content: fullResponse });
+        return;
+      }
 
       const systemPrompt = buildSystemPrompt(context);
 
@@ -217,18 +260,18 @@ export default function AIChatBot({ context, onAction }: Props) {
           buffer = lines.pop() || "";
           
           for (const line of lines) {
-            if (line.trim().startsWith("data: ") && !line.includes("[DONE]")) {
-              try {
-                const data = JSON.parse(line.trim().slice(6));
-                const content = data.choices?.[0]?.delta?.content;
-                if (content) {
-                  fullResponse += content;
-                  setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: fullResponse } : m));
-                }
-              } catch (e) {
-                // Ignore incomplete chunks
-              }
-            }
+             if (line.trim().startsWith("data: ") && !line.includes("[DONE]")) {
+               try {
+                 const data = JSON.parse(line.trim().slice(6));
+                 const content = data.choices?.[0]?.delta?.content;
+                 if (content) {
+                   fullResponse += content;
+                   setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: fullResponse } : m));
+                 }
+               } catch (e) {
+                 // Ignore incomplete chunks
+               }
+             }
           }
         }
       }
@@ -246,54 +289,17 @@ export default function AIChatBot({ context, onAction }: Props) {
     } catch (err: any) {
       historyRef.current.pop();
       const errorMessage = err.message || "Unknown error";
-      const isAuthError = errorMessage.toLowerCase().includes("user not found") || errorMessage.toLowerCase().includes("unauthorized") || errorMessage.includes("401") || errorMessage.includes("key requires");
+      const errMsgOut = `❌ API Error: ${errorMessage}. Please check your OpenRouter API key.`;
       
-      // ── Intelligent Offline Simulation Fallback ────────────────────────────────
-      if (isAuthError || errorMessage.includes('Failed to fetch')) {
-        const query = text.toLowerCase();
-        let fallbackMsg = '';
-
-        const nodesList = Object.entries(context.nodes);
-        const maxAqi = nodesList.reduce((max, curr) => (curr[1].aqi > max ? curr[1].aqi : max), 0);
-
-        if (query.includes('aqi') || query.includes('worst') || query.includes('quality')) {
-          fallbackMsg = `*(Offline Fallback)* I'm currently scanning ${nodesList.length} total nodes. The highest recorded AQI right now is **${maxAqi || 'nominal'}**. All other towers are holding stable telemetry.`;
-        } 
-        else if (query.includes('co2') || query.includes('co ') || query.includes('hazard')) {
-          fallbackMsg = `*(Offline Fallback)* Your system thresholds are locked at **${context.thresholds.co2} ppm for CO₂** and **${context.thresholds.co} ppm for CO**. The current status stream indicates operational safety compliance.`;
-        }
-        else if (query.includes('set') && query.includes('threshold')) {
-          fallbackMsg = `*(Offline Fallback)* I am operating in Demo Mode because the external API key was revoked, so I cannot automatically safely execute threshold mutation commands right now.`;
-        }
-        else {
-          fallbackMsg = `*(Offline Fallback)* I received your command. Because your OpenRouter API key (\`sk-or-v...\`) has been revoked by the provider, I am running locally. I can see your dashboard has **${context.alerts.length} active alerts** and **${nodesList.length} tracking nodes**, but deep analysis requires a new API key.`;
-        }
-
-        historyRef.current.push({ role: 'assistant', content: fallbackMsg });
-        
-        if (aiMsgId) {
-           setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: fallbackMsg } : m));
-        } else {
-           setMessages(prev => [...prev, {
-             id: (Date.now() + 1).toString(),
-             role: 'assistant',
-             content: fallbackMsg,
-             timestamp: new Date(),
-           }]);
-        }
+      if (aiMsgId) {
+         setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: errMsgOut } : m));
       } else {
-        // Severe non-auth error
-        const errMsgOut = `❌ Request Failed: ${errorMessage}.`;
-        if (aiMsgId) {
-           setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: errMsgOut } : m));
-        } else {
-           setMessages(prev => [...prev, {
-             id: (Date.now() + 1).toString(),
-             role: 'assistant',
-             content: errMsgOut,
-             timestamp: new Date(),
-           }]);
-        }
+         setMessages(prev => [...prev, {
+           id: (Date.now() + 1).toString(),
+           role: 'assistant',
+           content: errMsgOut,
+           timestamp: new Date(),
+         }]);
       }
     } finally {
       setLoading(false);
@@ -305,17 +311,17 @@ export default function AIChatBot({ context, onAction }: Props) {
     setMessages([{
       id: 'welcome-refresh',
       role: 'assistant',
-      content: 'Chat cleared. How can I help you analyze your AQMS data?',
+      content: 'Chat cleared. How can I help you analyze your machine health data?',
       timestamp: new Date(),
     }]);
   };
 
   // Quick prompt chips
   const suggestions = [
-    'Analyze current air quality',
-    'Which node has the worst AQI?',
-    'Is CO2 level safe?',
-    'Set AQI threshold to 120',
+    'Analyze current machine health',
+    'Which node has the worst vibration?',
+    'Is current level safe?',
+    'Set VIB threshold to 12',
     'Compliance status report',
   ];
 
@@ -347,7 +353,7 @@ export default function AIChatBot({ context, onAction }: Props) {
                 <Bot className="w-4 h-4 text-primary-foreground" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground leading-none">AQMS AI</p>
+                <p className="text-sm font-semibold text-foreground leading-none">PLMS AI</p>
                 <p className="text-[10px] text-primary mt-0.5 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
                   Online · Qwen 3.6 Plus

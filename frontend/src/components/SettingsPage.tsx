@@ -29,7 +29,7 @@ export default function SettingsPage({
   alertEmail: extEmail,
   onConfigChange,
 }: {
-  thresholds?: { aqi: number; pm25: number; co: number; co2: number };
+  thresholds?: { vib: number; current: number; temp: number; hum: number };
   alertEmail?: string;
   onConfigChange?: (updates: { thresholds?: any, alertEmail?: string }) => void;
 } = {}) {
@@ -39,10 +39,10 @@ export default function SettingsPage({
   const [pinError, setPinError] = useState(false);
   const REQUIRED_PIN = '1234';
   const LOCKED_TABS = ['thresholds', 'notifications', 'security'];
-  const [aqiLimit,   setAqiLimit]   = useState(ext?.aqi  ?? 150);
-  const [coLimit,    setCoLimit]    = useState(ext?.co   ?? 9);
-  const [co2Limit,   setCo2Limit]   = useState(ext?.co2  ?? 1000);
-  const [pm25Limit,  setPm25Limit]  = useState(ext?.pm25 ?? 35);
+  const [vibLimit,   setVibLimit]   = useState(ext?.vib  ?? 5);
+  const [currentLimit,    setCurrentLimit]    = useState(ext?.current   ?? 20);
+  const [tempLimit,   setTempLimit]   = useState(ext?.temp  ?? 60);
+  const [humLimit,  setHumLimit]  = useState(ext?.hum ?? 50);
   const [muteAlerts,  setMuteAlerts]  = useState(false);
   const [saved,       setSaved]       = useState(false);
 
@@ -66,7 +66,7 @@ export default function SettingsPage({
 
   const save = () => {
     onConfigChange?.({ 
-       thresholds: { aqi: aqiLimit, pm25: pm25Limit, co: coLimit, co2: co2Limit },
+       thresholds: { vib: vibLimit, hum: humLimit, current: currentLimit, temp: tempLimit },
        alertEmail: emailEnabled ? emailAddr : '' 
     });
     setSaved(true);
@@ -188,10 +188,10 @@ export default function SettingsPage({
                   <h2 className="text-sm font-semibold text-foreground mb-1">Alert Thresholds</h2>
                   <p className="text-xs text-muted-foreground">Values exceeding these limits trigger alerts across all configured notification channels.</p>
                 </div>
-                <ThresholdRow label="Critical AQI"     description="High-priority alert when AQI exceeds this level."              value={aqiLimit}  min={50}  max={300}  step={5}  unit=""       color="text-destructive"                       onChange={setAqiLimit}  />
-                <ThresholdRow label="PM 2.5 Limit"     description="WHO guideline: 15 µg/m³ per 24h average (indoor)."            value={pm25Limit} min={10}  max={150}  step={5}  unit="µg/m³" color="text-orange-500"                        onChange={setPm25Limit} />
-                <ThresholdRow label="CO Hazard Level"  description="Carbon monoxide safety limit. NIOSH ceiling: 35 ppm."          value={coLimit}   min={1}   max={50}   step={1}  unit="ppm"   color="text-yellow-600 dark:text-yellow-400"  onChange={setCoLimit}   />
-                <ThresholdRow label="CO₂ Warning"      description="Indoor air quality degradation boundary."                      value={co2Limit}  min={400} max={2000} step={50} unit="ppm"   color="text-blue-500"                         onChange={setCo2Limit}  />
+                <ThresholdRow label="Vibration Limit"     description="Bearing wear and mechanical imbalance warning."              value={vibLimit}  min={1}  max={30}  step={0.5}  unit="mm/s"       color="text-destructive"                       onChange={setVibLimit}  />
+                <ThresholdRow label="Current Limit"     description="Motor overcurrent detection."            value={currentLimit} min={5}  max={50}  step={1}  unit="A" color="text-orange-500"                        onChange={setCurrentLimit} />
+                <ThresholdRow label="Temp Hazard Level"  description="Overheating threshold for critical machine parts."          value={tempLimit}   min={20}   max={120}   step={1}  unit="°C"   color="text-yellow-600 dark:text-yellow-400"  onChange={setTempLimit}   />
+                <ThresholdRow label="Humidity Warning"      description="Moisture condensation limits for electrical panels."                      value={humLimit}  min={10} max={100} step={2} unit="%"   color="text-blue-500"                         onChange={setHumLimit}  />
 
                 <div className="flex items-center justify-between pt-4 border-t border-border">
                   <div>

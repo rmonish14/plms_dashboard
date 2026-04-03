@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import NodeCard from './NodeCard';
 import type { SystemAlert } from './AlertFeed';
-import { Radio, AlertTriangle, MonitorPlay, TrendingUp, Wind, Thermometer } from 'lucide-react';
+import { Radio, AlertTriangle, MonitorPlay, TrendingUp, Thermometer, Activity } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'framer-motion';
 
@@ -26,7 +26,7 @@ export default function Dashboard({
   onAlertsChange?: (alerts: SystemAlert[]) => void;
   onNodesChange?: (nodes: Record<string, any>) => void;
   onStatusChange?: (status: Record<string, any>) => void;
-  thresholds?: { aqi: number; pm25: number; co: number; co2: number };
+  thresholds?: { vib: number; temp: number; hum: number; current: number };
 }) {
   const [nodesData, setNodesData]       = useState<Record<string, any>>({});
   const [nodesStatus, setNodesStatus]   = useState<Record<string, any>>({});
@@ -51,13 +51,10 @@ export default function Dashboard({
 
       const formattedData = {
         nodeId:      data.nodeId,
-        aqi:         Math.round((data.pm25 ?? 0) * 2.5),
-        pm2_5:       data.pm25        ?? 0,
-        pm10:        data.pm10        ?? 0,
-        co:          data.co          ?? 0,
-        co2:         data.co2         ?? 0,
-        temperature: data.temperature ?? 0,
-        humidity:    data.humidity    ?? 0,
+        vib:         data.vib         ?? 0,
+        temp:        data.temp        ?? 0,
+        hum:         data.hum         ?? 0,
+        current:     data.current     ?? 0,
         lat:         data.lat,
         long:        data.long,
         relay:       data.relay,        // 'ON' | 'OFF' — synced from ESP firmware
@@ -111,14 +108,14 @@ export default function Dashboard({
       });
 
       setAlerts([
-        { id: '1', nodeId: 'alpha-001', message: 'PM2.5 elevated above 35 µg/m³ — moderate air quality warning.', severity: 'warning', timestamp: new Date().toISOString() },
-        { id: '2', nodeId: 'gamma-003', message: 'Node offline — no heartbeat received for >5 minutes.', severity: 'critical', timestamp: new Date(Date.now() - 300000).toISOString() },
-        { id: '3', nodeId: 'beta-002', message: 'CO₂ within safe operational range.', severity: 'info', timestamp: new Date(Date.now() - 60000).toISOString() },
+        { id: '1', nodeId: 'machine-alpha', message: 'Vibration elevated above 5 mm/s — moderate health warning.', severity: 'warning', timestamp: new Date().toISOString() },
+        { id: '2', nodeId: 'machine-gamma', message: 'Node offline — no heartbeat received for >5 minutes.', severity: 'critical', timestamp: new Date(Date.now() - 300000).toISOString() },
+        { id: '3', nodeId: 'machine-beta', message: 'Current within safe operational range.', severity: 'info', timestamp: new Date(Date.now() - 60000).toISOString() },
       ]);
 
-      let alpha = { aqi: 108, pm2_5: 38, pm10: 55, co: 1.8, co2: 820, temperature: 24, humidity: 48 };
-      let beta  = { aqi:  42, pm2_5: 11, pm10: 18, co: 0.4, co2: 415, temperature: 21, humidity: 55 };
-      const gamma = { aqi: 185, pm2_5: 88, pm10: 115, co: 4.9, co2: 1180, temperature: 29, humidity: 31 };
+      let alpha = { vib: 2.1, temp: 45, hum: 40, current: 15.2 };
+      let beta  = { vib: 6.5, temp: 72, hum: 48, current: 22.4 };
+      const gamma = { vib: 1.2, temp: 38, hum: 35, current: 12.1 };
 
       const ts = () => new Date().toISOString();
 
@@ -134,25 +131,24 @@ export default function Dashboard({
       mockInterval = setInterval(() => {
         alpha = {
           ...alpha,
-          aqi:   Math.min(300, Math.max(0, alpha.aqi   + Math.floor(Math.random() * 12 - 5))),
-          pm2_5: Math.max(5,   alpha.pm2_5 + Math.floor(Math.random() * 6  - 2)),
-          pm10:  Math.max(10,  alpha.pm10  + Math.floor(Math.random() * 8  - 3)),
-          co:    Math.max(0,   +(alpha.co  + (Math.random() * 0.4 - 0.2)).toFixed(1)),
-          co2:   Math.max(400, alpha.co2   + Math.floor(Math.random() * 20 - 8)),
+          vib: Math.max(0, +(alpha.vib + (Math.random() * 0.4 - 0.2)).toFixed(1)),
+          temp: Math.max(20, Math.min(100, alpha.temp + Math.floor(Math.random() * 4 - 2))),
+          hum: Math.max(0, Math.min(100, alpha.hum + Math.floor(Math.random() * 4 - 2))),
+          current: Math.max(0, +(alpha.current + (Math.random() * 2 - 1)).toFixed(1)),
         };
         beta = {
           ...beta,
-          aqi:   Math.max(20, beta.aqi + Math.floor(Math.random() * 6 - 2)),
-          pm2_5: Math.max(5,  beta.pm2_5 + Math.floor(Math.random() * 4 - 1)),
+          vib: Math.max(0, +(beta.vib + (Math.random() * 0.4 - 0.2)).toFixed(1)),
+          current: Math.max(0, +(beta.current + (Math.random() * 2 - 1)).toFixed(1)),
         };
 
-        const alphaNode = { nodeId: 'alpha-001', timestamp: ts(), ...alpha };
-        const betaNode  = { nodeId: 'beta-002',  timestamp: ts(), ...beta  };
-        const gammaNode = { nodeId: 'gamma-003', timestamp: new Date(Date.now() - 360000).toISOString(), ...gamma };
+        const alphaNode = { nodeId: 'machine-alpha', timestamp: ts(), ...alpha };
+        const betaNode  = { nodeId: 'machine-beta',  timestamp: ts(), ...beta  };
+        const gammaNode = { nodeId: 'machine-gamma', timestamp: new Date(Date.now() - 360000).toISOString(), ...gamma };
 
-        setNodesData({ 'alpha-001': alphaNode, 'beta-002': betaNode, 'gamma-003': gammaNode });
-        pushHistory('alpha-001', alpha);
-        pushHistory('beta-002', beta);
+        setNodesData({ 'machine-alpha': alphaNode, 'machine-beta': betaNode, 'machine-gamma': gammaNode });
+        pushHistory('machine-alpha', alpha);
+        pushHistory('machine-beta', beta);
       }, 3000);
     };
 
@@ -163,19 +159,19 @@ export default function Dashboard({
   const nodeKeys        = Object.keys(outdoorNodesData);
   const connectedNodes  = Object.values(nodesStatus).filter(n => n.status !== 'offline' && !n.nodeId?.startsWith('worker_')).length;
   const totalNodes      = Math.max(connectedNodes, nodeKeys.length);
-  const avgAqi          = nodeKeys.length > 0
-    ? Math.round(Object.values(outdoorNodesData).reduce((s, n) => s + n.aqi, 0) / nodeKeys.length)
-    : 0;
+  const avgVib          = nodeKeys.length > 0
+    ? (Object.values(outdoorNodesData).reduce((s, n) => s + (n.vib || 0), 0) / nodeKeys.length).toFixed(1)
+    : '--';
   const avgTemp         = nodeKeys.length > 0
-    ? (Object.values(outdoorNodesData).reduce((s, n) => s + (n.temperature || 0), 0) / nodeKeys.length).toFixed(1)
+    ? (Object.values(outdoorNodesData).reduce((s, n) => s + (n.temp || 0), 0) / nodeKeys.length).toFixed(1)
     : '--';
   const criticalAlerts  = alerts.filter(a => a.severity === 'critical').length;
 
-  const getAqiLabel = (v: number) =>
-    v <= 50  ? 'Good'      :
-    v <= 100 ? 'Moderate'  :
-    v <= 150 ? 'Sensitive' :
-    v <= 200 ? 'Unhealthy' : 'Hazardous';
+  const getHealthLabel = (v: number) =>
+    v <= 2  ? 'Healthy'      :
+    v <= 5  ? 'Normal'  :
+    v <= 8  ? 'Warning' :
+    v <= 15 ? 'Critical' : 'Failing';
 
 
   return (
@@ -209,11 +205,11 @@ export default function Dashboard({
               accent="primary"
             />
             <KpiCard
-              label="Fleet Avg AQI"
-              value={avgAqi > 0 ? avgAqi.toString() : '--'}
-              sub={avgAqi > 0 ? getAqiLabel(avgAqi) : undefined}
-              icon={<Wind className="w-4 h-4" />}
-              accent={avgAqi > 100 ? 'destructive' : 'primary'}
+              label="Fleet Avg Vibration"
+              value={avgVib !== '--' ? `${avgVib} mm/s` : '--'}
+              sub={avgVib !== '--' ? getHealthLabel(parseFloat(avgVib)) : undefined}
+              icon={<Activity className="w-4 h-4" />}
+              accent={parseFloat(avgVib as string) > 8 ? 'destructive' : 'primary'}
             />
             <KpiCard
               label="Avg Temperature"
@@ -270,7 +266,7 @@ export default function Dashboard({
                   <NodeCard
                     data={{
                       nodeId: 'virtual-demo-01',
-                      aqi: 72, pm2_5: 22, pm10: 38, co: 0.8, co2: 450, temperature: 24, humidity: 45,
+                      vib: 1.5, temp: 35, hum: 40, current: 10.5,
                       timestamp: new Date().toISOString()
                     }}
                     status={{ status: 'online' }}
@@ -292,7 +288,7 @@ export default function Dashboard({
                   <NodeCard
                     data={{
                       nodeId: 'virtual-demo-02',
-                      aqi: 145, pm2_5: 55, pm10: 82, co: 2.1, co2: 850, temperature: 28, humidity: 32,
+                      vib: 4.8, temp: 65, hum: 55, current: 18.2,
                       timestamp: new Date().toISOString()
                     }}
                     status={{ status: 'online' }}
@@ -314,7 +310,7 @@ export default function Dashboard({
                   <NodeCard
                     data={{
                       nodeId: 'virtual-demo-03',
-                      aqi: 22, pm2_5: 5, pm10: 12, co: 0.1, co2: 380, temperature: 21, humidity: 40,
+                      vib: 0.8, temp: 28, hum: 45, current: 8.5,
                       timestamp: new Date().toISOString()
                     }}
                     status={{ status: 'online' }}

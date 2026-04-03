@@ -10,7 +10,7 @@ const EPOCHS = 50;
 const MAX_HISTORY = 100;
 
 export default function PredictivePage() {
-  const [targetFeature, setTargetFeature] = useState<'pm2_5' | 'temperature' | 'aqi' | 'humidity' | 'co2'>('pm2_5');
+  const [targetFeature, setTargetFeature] = useState<'vib' | 'temperature' | 'current' | 'humidity'>('vib');
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [availableNodes, setAvailableNodes] = useState<string[]>([]);
   const [predictions, setPredictions] = useState<any[]>([]);
@@ -153,7 +153,7 @@ export default function PredictivePage() {
         
         {/* Metric Switcher */}
         <div className="flex bg-secondary p-1 rounded-xl">
-           {[ { id: 'pm2_5', label: 'PM 2.5 Air Quality' }, { id: 'temperature', label: 'Temperature' }, { id: 'humidity', label: 'Humidity' }, { id: 'co2', label: 'CO₂' }, { id: 'aqi', label: 'Overall AQI' } ].map(metric => (
+           {[ { id: 'vib', label: 'Vibration' }, { id: 'current', label: 'Current' }, { id: 'temperature', label: 'Temperature' }, { id: 'humidity', label: 'Humidity' } ].map(metric => (
              <button
                 key={metric.id}
                 onClick={() => setTargetFeature(metric.id as any)}
@@ -232,26 +232,22 @@ export default function PredictivePage() {
                if (val === null || val === undefined) return "Awaiting sufficient data...";
                
                switch (targetFeature) {
-                 case 'pm2_5':
-                   if (val > 50) return "Critical: Hazardous particle levels predicted. HVAC filtration required.";
-                   if (val > 35) return "Warning: Elevated PM2.5 expected. Monitor closely.";
-                   return "Normal: PM2.5 levels expected to remain stable.";
+                 case 'vib':
+                   if (val > 5) return "Critical: Bearing wear or severe misalignment predicted. Immediate shutdown advised.";
+                   if (val > 3) return "Warning: Elevated vibration expected. Schedule maintenance inspection.";
+                   return "Normal: Machine vibration stable.";
                  case 'temperature':
-                   if (val > 30) return "Warning: Temperature spike predicted. Cooling may be needed.";
-                   if (val < 15) return "Warning: Temperature drop predicted.";
+                   if (val > 60) return "Warning: Impending thermal runaway predicted. Cooling may be needed.";
+                   if (val < 15) return "Warning: Freezing temperature predicted. Check oil viscosity.";
                    return "Normal: Thermal stability expected.";
                  case 'humidity':
-                   if (val > 70) return "Warning: High humidity predicted. Dehumidification recommended.";
+                   if (val > 70) return "Warning: High humidity predicted. Corrosion risk.";
                    if (val < 30) return "Warning: Low humidity predicted.";
                    return "Normal: Consistent humidity expected.";
-                 case 'co2':
-                   if (val > 1000) return "Critical: High CO₂ predicted. Ensure ventilation.";
-                   if (val > 800) return "Warning: Rising CO₂ predicted.";
-                   return "Normal: CO₂ levels stable.";
-                 case 'aqi':
-                   if (val > 100) return "Critical: Poor air quality index predicted.";
-                   if (val > 50) return "Warning: Moderate air quality predicted.";
-                   return "Normal: Good air quality index expected.";
+                 case 'current':
+                   if (val > 28) return "Critical: Motor overload/stall predicted. Check coupling immediately.";
+                   if (val > 20) return "Warning: Increased load current predicted. Check machine strain.";
+                   return "Normal: Electrical draw stable.";
                  default:
                    return "Stable trend Formulated.";
                }
