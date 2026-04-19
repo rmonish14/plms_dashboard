@@ -4,7 +4,8 @@
 // Realtime:  Socket.io
 // IoT:       MQTT (HiveMQ broker)
 // ─────────────────────────────────────────────────────────────────────────────
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const express   = require('express');
 const http      = require('http');
@@ -52,6 +53,14 @@ app.post('/api/login', (req, res, next) => authRouter(req, res, next));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
+// ── Frontend Static Serving (Production Only) ─────────────────────────────────
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  });
+}
 
 // ── WebSocket ─────────────────────────────────────────────────────────────────
 io.on('connection', (socket) => {
@@ -103,6 +112,12 @@ mqttClient.on('connect', () => {
   mqttClient.subscribe('plms/+/data', { qos: 1 }, (err) => {
     if (err) console.error('[MQTT] Subscribe error (data):', err);
     else      console.log('[MQTT] Subscribed → plms/+/data');
+  });
+
+  // Subscribe to custom machine topics from the specific ESP setup
+  mqttClient.subscribe('machine/sensor/+', { qos: 1 }, (err) => {
+    if (err) console.error('[MQTT] Subscribe error (machine):', err);
+    else      console.log('[MQTT] Subscribed → machine/sensor/+');
   });
 
   // Subscribe to device status heartbeats

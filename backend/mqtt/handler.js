@@ -106,9 +106,70 @@ function checkMetric({ nodeId, metric, value, high, low, msgHigh, msgLow }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// State variable for custom ESP32 integration
+// ─────────────────────────────────────────────────────────────────────────────
+const customMachineState = {
+  deviceId: 'machine-alpha-custom',
+  vib: 0, temp: 0, hum: 0, current: 0, dist: 0, obj_det: 0,
+  relay: 'ON', mode: 'MANUAL', ml_status: null
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main message handler
 // ─────────────────────────────────────────────────────────────────────────────
 async function handleMessage(topic, message, io, mqttClient) {
+  // ── CUSTOM ESP32 INTEGRATION ───────────────────────────────────────────────
+  if (topic.startsWith('machine/sensor/')) {
+    const parts = topic.split('/');
+    const sensor = parts[parts.length - 1];
+    const val = parseFloat(message.toString()) || 0;
+
+    if (sensor === 'temp') customMachineState.temp = val;
+    else if (sensor === 'hum') customMachineState.hum = val;
+    else if (sensor === 'vibration') customMachineState.vib = val;
+    else if (sensor === 'object_detect') customMachineState.obj_det = val;
+    else if (sensor === 'distance') customMachineState.dist = val;
+    else if (sensor === 'relay') customMachineState.relay = message.toString() === 'ON' ? 'ON' : 'OFF';
+    else if (sensor === 'mode') customMachineState.mode = message.toString() === 'AUTO' ? 'AUTO' : 'MANUAL';
+
+    const deviceId = customMachineState.deviceId;
+    await upsertDevice(deviceId);
+
+    // Broadcast live telemetry to dashboard
+    io.emit('node_data', {
+      nodeId: deviceId,
+      vib: customMachineState.vib,
+      temp: customMachineState.temp,
+      hum: customMachineState.hum,
+      current: customMachineState.current,
+      dist: customMachineState.dist,
+      obj_det: customMachineState.obj_det,
+      relay: customMachineState.relay,
+      mode: customMachineState.mode,
+      ml_status: customMachineState.ml_status,
+      timestamp: new Date().toISOString()
+    });
+
+    // Mark online
+    io.emit('node_status', { nodeId: deviceId, status: 'online' });
+
+    // Load current thresholds
+    const cfg = await getConfig();
+    const T   = cfg.thresholds   || {};
+    const M   = cfg.alertMessages || {};
+
+    const checks = [
+      checkMetric({ nodeId: deviceId, metric: 'vib',  value: customMachineState.vib,  high: T.vib  ?? 5,  low: T.vibMin  ?? 0, msgHigh: M.vibHigh,  msgLow: M.vibLow  }),
+      checkMetric({ nodeId: deviceId, metric: 'temp', value: customMachineState.temp, high: T.temp ?? 60, low: T.tempMin ?? 0, msgHigh: M.tempHigh, msgLow: M.tempLow }),
+      checkMetric({ nodeId: deviceId, metric: 'hum',  value: customMachineState.hum,  high: T.hum  ?? 50, low: T.humMin  ?? 0, msgHigh: M.humHigh,  msgLow: M.humLow  }),
+    ].filter(Boolean);
+
+    for (const alert of checks) {
+      io.emit('new_alert', alert);
+    }
+    return;
+  }
+
   const parts = topic.split('/');
   if (parts.length < 3) return;
 

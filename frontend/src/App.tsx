@@ -331,8 +331,6 @@ export default function App() {
             <Dashboard
               globalAlerts={alerts}
               onAlertsChange={setAlerts}
-              onNodesChange={setLiveNodes}
-              onStatusChange={setLiveStatus}
               thresholds={thresholds}
             />
           )}

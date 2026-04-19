@@ -29,13 +29,14 @@ interface NodeCardProps {
   data: any;
   status: any;
   history: any[];
+  thresholds?: { vib: number; temp: number; hum: number; current: number };
 }
 
-export default function NodeCard({ data, status, history }: NodeCardProps) {
+export default function NodeCard({ data, status, history, thresholds }: NodeCardProps) {
   const [relayActive, setRelayActive] = useState(false);
   const [relayLoading, setRelayLoading] = useState(false);
   const [autoMode, setAutoMode] = useState(false);
-  const AUTO_TEMP_THRESHOLD = 30; // °C — matches ESP firmware
+  const AUTO_TEMP_THRESHOLD = thresholds?.temp ?? 30; // °C — syncs with global configuration
   const [showShare, setShowShare] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
   const [shareMessage, setShareMessage] = useState('');
@@ -161,9 +162,11 @@ export default function NodeCard({ data, status, history }: NodeCardProps) {
         <div className="grid grid-cols-2 gap-px bg-border rounded-lg overflow-hidden border border-border">
           {[
             { label: 'Vibration', value: vib, unit: 'mm/s' },
-            { label: 'Current',  value: current,  unit: 'A' },
-            { label: 'Temp',     value: temp,    unit: '°C'   },
-            { label: 'Humidity',    value: hum,   unit: '%'   },
+            { label: 'Current',   value: current, unit: 'A' },
+            { label: 'Temp',      value: temp,    unit: '°C' },
+            { label: 'Humidity',  value: hum,     unit: '%' },
+            ...(data.dist !== undefined ? [{ label: 'Distance', value: data.dist, unit: 'mm' }] : []),
+            ...(data.obj_det !== undefined ? [{ label: 'Object', value: data.obj_det === 1 || data.obj_det === '1' ? 'Detected' : 'Clear', unit: '' }] : []),
           ].map(({ label, value, unit }) => (
             <div key={label} className="bg-card px-4 py-3">
               <p className="text-[10px] font-medium text-muted-foreground mb-1">{label}</p>

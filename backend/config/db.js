@@ -1,14 +1,15 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const { Pool } = require('pg');
 
 // ── PostgreSQL Connection Pool ────────────────────────────────────────────────
-// Reads DATABASE_URL from environment. Falls back to the Render-hosted DB.
+// SSL is required for Render-hosted PostgreSQL (cloud) but not for local dev
+const isRenderDb = (process.env.DATABASE_URL || '').includes('render.com');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false, // Required for Render-hosted PostgreSQL
-  },
-  max: 10,               // Maximum number of clients in the pool
+  ssl: isRenderDb ? { rejectUnauthorized: false } : false,
+  max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
 });
@@ -22,52 +23,16 @@ pool.on('error', (err) => {
 });
 
 // ── Schema Initialisation ─────────────────────────────────────────────────────
-// Creates all required tables on startup if they don't exist.
+// PLMS Essential Tables Only — minimal, clean schema.
 const initSchema = async () => {
   const sql = `
-    -- 1. Registered devices / nodes
-    CREATE TABLE IF NOT EXISTS devices (
-      id         SERIAL PRIMARY KEY,
-      device_id  VARCHAR(100) UNIQUE NOT NULL,
-      location   TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+    -- Drop legacy AQMS tables if they exist (one-time migration cleanup)
+    DROP TABLE IF EXISTS devices CASCADE;
+    DROP TABLE IF EXISTS critical_events CASCADE;
+    DROP TABLE IF EXISTS system_config CASCADE;
+    DROP TABLE IF EXISTS plms_devices CASCADE;
 
-    -- 2. Critical sensor events (only stored when thresholds are breached)
-    CREATE TABLE IF NOT EXISTS critical_events (
-      id          SERIAL PRIMARY KEY,
-      device_id   VARCHAR(100) NOT NULL,
-      pm25        FLOAT,
-      co2         FLOAT,
-      temperature FLOAT,
-      status      VARCHAR(50),
-      created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- 3. System configuration key-value store (JSONB for flexible settings)
-    CREATE TABLE IF NOT EXISTS system_config (
-      key        VARCHAR(100) PRIMARY KEY,
-      value      JSONB        NOT NULL DEFAULT '{}',
-      updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Seed default system settings if absent
-    INSERT INTO system_config (key, value)
-    VALUES (
-      'system_settings',
-      '{"thresholds":{"aqi":150,"pm25":100,"co2":1000,"temp":35},"alertEmail":""}'
-    )
-    ON CONFLICT (key) DO NOTHING;
-
-    -- 5. PLMS: Registered predictive machines
-    CREATE TABLE IF NOT EXISTS plms_devices (
-      id         SERIAL PRIMARY KEY,
-      device_id  VARCHAR(100) UNIQUE NOT NULL,
-      location   TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- 6. PLMS: Critical predictive events
+    -- 1. PLMS: Critical predictive sensor events (only stored on threshold breach)
     CREATE TABLE IF NOT EXISTS plms_critical_events (
       id          SERIAL PRIMARY KEY,
       device_id   VARCHAR(100) NOT NULL,
@@ -79,7 +44,7 @@ const initSchema = async () => {
       created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    -- 7. PLMS: System config
+    -- 2. PLMS: System configuration key-value store
     CREATE TABLE IF NOT EXISTS plms_system_config (
       key        VARCHAR(100) PRIMARY KEY,
       value      JSONB        NOT NULL DEFAULT '{}',
@@ -93,7 +58,13 @@ const initSchema = async () => {
     )
     ON CONFLICT (key) DO NOTHING;
 
-    -- 4. Application users
+    -- 4. Device registry (all MQTT nodes that have ever connected)
+    CREATE TABLE IF NOT EXISTS plms_devices (
+      device_id  VARCHAR(100) PRIMARY KEY,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- 3. Application users
     CREATE TABLE IF NOT EXISTS users (
       id         SERIAL PRIMARY KEY,
       username   VARCHAR(100) UNIQUE NOT NULL,
@@ -105,10 +76,10 @@ const initSchema = async () => {
 
   try {
     await pool.query(sql);
-    console.log('[DB] ✅ PostgreSQL schema initialised');
+    console.log('[DB] ✅ PostgreSQL schema initialised (PLMS essential tables only)');
   } catch (err) {
     console.error('[DB] ❌ Schema initialisation error:', err.message || err);
-    throw err; // Surface the error so the process knows DB setup failed
+    throw err;
   }
 };
 
