@@ -51,7 +51,7 @@ router.post('/share', async (req, res) => {
 
     const htmlContent = `
       <div style="font-family:sans-serif;background:#1a1a1a;color:#eee;padding:20px;border-radius:8px;">
-        <h2 style="color:#60a5fa;">AQMS Data Share</h2>
+        <h2 style="color:#60a5fa;">PLMS Data Share</h2>
         <p>${message || 'A supervisor has shared a node telemetry card with you.'}</p>
         <hr style="border-color:#333;" />
         <p><strong>Node:</strong> ${nodeData?.id || nodeData?.nodeId || 'Unknown'}</p>
@@ -64,9 +64,9 @@ router.post('/share', async (req, res) => {
     `;
 
     const info = await transporter.sendMail({
-      from: '"AQMS Alert System" <no-reply@aqms-industrial.com>',
+      from: '"PLMS Alert System" <no-reply@plms-industrial.com>',
       to: targetEmail,
-      subject: subject || 'AQMS Shared Telemetry Data',
+      subject: subject || 'PLMS Shared Telemetry Data',
       html: htmlContent,
     });
 

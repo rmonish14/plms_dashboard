@@ -38,8 +38,8 @@ router.get('/credentials', async (req, res) => {
     const credentials = {
       mqtt: {
         brokerUrl:   process.env.HIVEMQ_URL      || 'mqtt://broker.hivemq.com:1883',
-        topic:       'aqms/+/data  |  aqms/+/status',
-        clientId:    'aqms-backend-<random>',
+        topic:       'plms/+/data  |  plms/+/status',
+        clientId:    'plms-backend-<random>',
         qos:         '1 (data)  /  0 (status)',
       },
       database: {

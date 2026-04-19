@@ -26,7 +26,7 @@ pool.on('error', (err) => {
 // PLMS Essential Tables Only — minimal, clean schema.
 const initSchema = async () => {
   const sql = `
-    -- Drop legacy AQMS tables if they exist (one-time migration cleanup)
+    -- Drop legacy PLMS tables if they exist (one-time migration cleanup)
     DROP TABLE IF EXISTS devices CASCADE;
     DROP TABLE IF EXISTS critical_events CASCADE;
     DROP TABLE IF EXISTS system_config CASCADE;

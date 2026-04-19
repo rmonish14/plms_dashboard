@@ -96,8 +96,8 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
              <Wind className="w-8 h-8 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">AQMS Portal</h1>
-            <p className="text-sm text-muted-foreground mt-1">Air Quality Monitoring & SCADA Control</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">PLMS Portal</h1>
+            <p className="text-sm text-muted-foreground mt-1">Predictive Life Monitoring & SCADA Control</p>
           </div>
         </div>
 

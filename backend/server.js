@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// AQMS Backend — Production Server
+// PLMS Backend — Production Server
 // Database: PostgreSQL (Render-hosted) via pg pool
 // Realtime:  Socket.io
 // IoT:       MQTT (HiveMQ broker)
@@ -68,7 +68,7 @@ io.on('connection', (socket) => {
 
   // ── Relay Control ─────────────────────────────────────────────────────────
   // Frontend emits: { nodeId: 'alpha-001', state: 'ON' | 'OFF' }
-  // Backend publishes MQTT to: aqms/{nodeId}/control
+  // Backend publishes MQTT to: plms/{nodeId}/control
   socket.on('relay_control', ({ nodeId, state, mode }) => {
     if (!nodeId) {
       console.warn('[WS] Invalid relay_control payload — missing nodeId');
@@ -99,7 +99,7 @@ io.on('connection', (socket) => {
 const MQTT_BROKER = process.env.HIVEMQ_URL || 'mqtt://broker.hivemq.com:1883';
 
 const mqttClient = mqtt.connect(MQTT_BROKER, {
-  clientId:        `aqms-backend-${Math.random().toString(16).slice(2, 8)}`,
+  clientId:        `plms-backend-${Math.random().toString(16).slice(2, 8)}`,
   clean:           true,
   reconnectPeriod: 5000,
   connectTimeout:  30000,

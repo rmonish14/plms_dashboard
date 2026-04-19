@@ -36,7 +36,7 @@ export default function InfoPage() {
               <h2 className="text-sm font-semibold text-foreground">Edge Compute Architecture</h2>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed mb-5">
-              The AQMS platform uses a decentralized hardware topology. Field nodes handle data sampling and baseline calculations only.
+              The PLMS platform uses a decentralized hardware topology. Field nodes handle data sampling and baseline calculations only.
               Complex AI validation, threshold checking, and data retention occur at the central API tier.
               Nodes maintain volatile RAM-based queues to handle short disconnections without data loss.
             </p>

@@ -85,7 +85,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
   // Acknowledge back to backend
   char ackTopic[80];
-  snprintf(ackTopic, sizeof(ackTopic), "aqms/%s/control/ack", NODE_ID);
+  snprintf(ackTopic, sizeof(ackTopic), "plms/%s/control/ack", NODE_ID);
   StaticJsonDocument<64> ack;
   ack["relay"] = relayState;
   ack["mode"]  = relayMode;
@@ -101,7 +101,7 @@ void connectMQTT() {
 
     // FIX: Use unique client ID to avoid broker rejecting duplicate connections
     char clientId[32];
-    snprintf(clientId, sizeof(clientId), "aqms-%s-%04X", NODE_ID, (uint16_t)random(0xFFFF));
+    snprintf(clientId, sizeof(clientId), "plms-%s-%04X", NODE_ID, (uint16_t)random(0xFFFF));
 
     if (mqtt.connect(clientId)) {
       Serial.println("✅ Connected");
@@ -152,9 +152,9 @@ void setup() {
 
   // Build topic strings (char arrays — safe in callbacks)
   
-  snprintf(DATA_TOPIC,    sizeof(DATA_TOPIC),    "aqms/%s/data",    NODE_ID);
-  snprintf(STATUS_TOPIC,  sizeof(STATUS_TOPIC),  "aqms/%s/status",  NODE_ID);
-  snprintf(CONTROL_TOPIC, sizeof(CONTROL_TOPIC), "aqms/%s/control", NODE_ID);
+  snprintf(DATA_TOPIC,    sizeof(DATA_TOPIC),    "plms/%s/data",    NODE_ID);
+  snprintf(STATUS_TOPIC,  sizeof(STATUS_TOPIC),  "plms/%s/status",  NODE_ID);
+  snprintf(CONTROL_TOPIC, sizeof(CONTROL_TOPIC), "plms/%s/control", NODE_ID);
 
   // Relay pin
   pinMode(RELAY_PIN, OUTPUT);

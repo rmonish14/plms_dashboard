@@ -283,7 +283,7 @@ export default function DatabasePage() {
           <div className="mt-auto pt-4">
             <div className="rounded-lg border border-border/60 bg-card/30 p-3 text-[11px] text-muted-foreground leading-relaxed">
               <p className="font-semibold text-foreground/70 mb-1">PLMS Schema v2</p>
-              Only essential tables are stored. Legacy AQMS tables have been removed.
+              Only essential tables are stored. Legacy PLMS tables have been removed.
             </div>
           </div>
         </div>

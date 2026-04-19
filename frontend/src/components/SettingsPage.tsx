@@ -309,7 +309,7 @@ export default function SettingsPage({
               <div className="space-y-6">
                 <div>
                   <h2 className="text-sm font-semibold text-foreground mb-1">Admin Security</h2>
-                  <p className="text-xs text-muted-foreground">Manage authentication tokens and access control for AQMS operations.</p>
+                  <p className="text-xs text-muted-foreground">Manage authentication tokens and access control for PLMS operations.</p>
                 </div>
                 <div className="space-y-4 max-w-sm">
                   <div>

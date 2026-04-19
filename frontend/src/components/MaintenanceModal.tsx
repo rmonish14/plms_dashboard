@@ -189,7 +189,7 @@ export function downloadMaintenanceCSV(tasks: MaintenanceTask[]) {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `aqms-maintenance-schedule-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `plms-maintenance-schedule-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

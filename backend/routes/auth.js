@@ -4,7 +4,7 @@ const jwt       = require('jsonwebtoken');
 const { pool }  = require('../config/db');
 
 const router     = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'aqms_jwt_secret_change_in_production';
+const JWT_SECRET = process.env.JWT_SECRET || 'plms_jwt_secret_change_in_production';
 const SALT_ROUNDS = 12;
 
 // ── Helper: hash a plain-text password ───────────────────────────────────────

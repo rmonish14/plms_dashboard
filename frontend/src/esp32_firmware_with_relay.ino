@@ -1,8 +1,8 @@
 /*
- * AQMS ESP32 Firmware — with Relay Control via MQTT
+ * PLMS ESP32 Firmware — with Relay Control via MQTT
  * ─────────────────────────────────────────────────
- * Now subscribes to:  aqms/alpha-001/control
- * Publishes ACK to:   aqms/alpha-001/control/ack
+ * Now subscribes to:  plms/alpha-001/control
+ * Publishes ACK to:   plms/alpha-001/control/ack
  *
  * Control payload (from dashboard):
  *   {"relay":"ON"}  → GPIO 26 HIGH (relay energized)
@@ -24,10 +24,10 @@ const char* MQTT_BROKER = "broker.hivemq.com";
 const int   MQTT_PORT   = 1883;
 const char* NODE_ID     = "alpha-001";
 
-String DATA_TOPIC    = "aqms/" + String(NODE_ID) + "/data";
-String STATUS_TOPIC  = "aqms/" + String(NODE_ID) + "/status";
-String CONTROL_TOPIC = "aqms/" + String(NODE_ID) + "/control";       // ← Subscribe
-String ACK_TOPIC     = "aqms/" + String(NODE_ID) + "/control/ack";   // ← Publish ACK
+String DATA_TOPIC    = "plms/" + String(NODE_ID) + "/data";
+String STATUS_TOPIC  = "plms/" + String(NODE_ID) + "/status";
+String CONTROL_TOPIC = "plms/" + String(NODE_ID) + "/control";       // ← Subscribe
+String ACK_TOPIC     = "plms/" + String(NODE_ID) + "/control/ack";   // ← Publish ACK
 
 // ── Node Location ──────────────────
 #define LATITUDE  11.0168

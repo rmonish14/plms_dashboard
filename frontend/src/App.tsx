@@ -43,7 +43,7 @@ export default function App() {
   // ── Session state ─────────────────────────────────────────────────────────
   const [session, setSession] = useState<SessionPayload | null>(() => {
     try {
-      const stored = localStorage.getItem("aqms_session");
+      const stored = localStorage.getItem("plms_session");
       if (stored) return JSON.parse(stored);
     } catch {}
     return null;
@@ -51,9 +51,9 @@ export default function App() {
 
   useEffect(() => {
     if (session) {
-      localStorage.setItem("aqms_session", JSON.stringify(session));
+      localStorage.setItem("plms_session", JSON.stringify(session));
     } else {
-      localStorage.removeItem("aqms_session");
+      localStorage.removeItem("plms_session");
     }
   }, [session]);
 
@@ -104,13 +104,13 @@ export default function App() {
 
   // ── Maintenance tasks (persisted to localStorage) ─────────────────────────
   const [maintenance, setMaintenance] = useState<MaintenanceTask[]>(() => {
-    try { return JSON.parse(localStorage.getItem("aqms-maintenance") ?? "[]"); }
+    try { return JSON.parse(localStorage.getItem("plms-maintenance") ?? "[]"); }
     catch { return []; }
   });
   const [scheduleAlert, setScheduleAlert] = useState<SystemAlert | null>(null);
 
   useEffect(() => {
-    localStorage.setItem("aqms-maintenance", JSON.stringify(maintenance));
+    localStorage.setItem("plms-maintenance", JSON.stringify(maintenance));
   }, [maintenance]);
 
   // ── Global socket (for bell badge & AI context) ───────────────────────────

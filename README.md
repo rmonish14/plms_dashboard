@@ -1,4 +1,4 @@
-# 🌫️ AQMS — Air Quality Monitoring System
+# 🌫️ PLMS — Predictive Life Monitoring System
 
 A production-ready Industrial IoT platform for real-time air quality monitoring across distributed sensor nodes.
 
@@ -9,7 +9,7 @@ A production-ready Industrial IoT platform for real-time air quality monitoring 
 ```
 ┌─────────────────────┐     MQTT (HiveMQ)     ┌──────────────────────┐
 │  ESP32 / Simulator  │ ──────────────────────▶│   Node.js Backend    │
-│  (Sensor Nodes)     │   aqms/<nodeId>/data   │   (Express + MQTT)   │
+│  (Sensor Nodes)     │   plms/<nodeId>/data   │   (Express + MQTT)   │
 └─────────────────────┘                        └───────────┬──────────┘
                                                            │
                                           ┌────────────────┼────────────────┐
@@ -81,9 +81,9 @@ CREATE TABLE users (
 | Property | Value |
 |----------|-------|
 | Broker | `mqtt://broker.hivemq.com:1883` (or `HIVEMQ_URL` env var) |
-| Data Topic | `aqms/<nodeId>/data` |
-| Status Topic | `aqms/<nodeId>/status` |
-| Subscription | `aqms/+/data` (wildcard — all nodes) |
+| Data Topic | `plms/<nodeId>/data` |
+| Status Topic | `plms/<nodeId>/status` |
+| Subscription | `plms/+/data` (wildcard — all nodes) |
 
 ### Expected ESP32 Payload Format
 ```json
@@ -228,7 +228,7 @@ npm run dev
 ## 8. Project Structure
 
 ```
-AQMS/
+PLMS/
 ├── backend/
 │   ├── config/
 │   │   └── db.js            # PostgreSQL pool + schema auto-init

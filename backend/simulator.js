@@ -1,7 +1,7 @@
 const mqtt = require('mqtt');
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AQMS Simulator — publishes to HiveMQ (same broker as ESP32 hardware)
+// PLMS Simulator — publishes to HiveMQ (same broker as ESP32 hardware)
 // Topic format: plms/<nodeId>/data   (matches backend wildcard)
 // ─────────────────────────────────────────────────────────────────────────────
 const BROKER_URL = process.env.HIVEMQ_URL || 'mqtt://broker.hivemq.com:1883';
@@ -12,7 +12,7 @@ const WORKER_NODES  = ['spares_01_bearing', 'spares_02_motor'];
 const ALL_NODES     = [...STATIC_NODES, ...WORKER_NODES];
 
 const client = mqtt.connect(BROKER_URL, {
-  clientId: `aqms-simulator-${Math.random().toString(16).slice(2, 8)}`,
+  clientId: `plms-simulator-${Math.random().toString(16).slice(2, 8)}`,
   clean: true,
   reconnectPeriod: 5000,
 });

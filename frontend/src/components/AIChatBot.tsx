@@ -281,7 +281,7 @@ export default function AIChatBot({ context, onAction }: Props) {
   const [showSettings, setShowSettings] = useState(false);
   const [apiKey,    setApiKey]    = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('aqms_ai_key') || DEFAULT_API_KEY;
+      return localStorage.getItem('plms_ai_key') || DEFAULT_API_KEY;
     }
     return DEFAULT_API_KEY;
   });
@@ -294,9 +294,9 @@ export default function AIChatBot({ context, onAction }: Props) {
     const val = key.trim() || DEFAULT_API_KEY;
     setApiKey(val);
     if (!key.trim()) {
-      localStorage.removeItem('aqms_ai_key');
+      localStorage.removeItem('plms_ai_key');
     } else {
-      localStorage.setItem('aqms_ai_key', key.trim());
+      localStorage.setItem('plms_ai_key', key.trim());
     }
   };
 

@@ -36,7 +36,7 @@ export default function NotificationsPanel({
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `aqms-alert-log-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `plms-alert-log-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

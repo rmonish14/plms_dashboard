@@ -1,5 +1,5 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  AQMS — ESP32 Firmware  (Minimal Fixed Version)
+//  PLMS — ESP32 Firmware  (Minimal Fixed Version)
 //  Based on original code, with 4 targeted patches:
 //    [FIX-1] Unique MQTT client ID (avoids broker-side duplicate rejection)
 //    [FIX-2] Heartbeat — republish "online" every 30s (backend reconnect safe)
@@ -22,8 +22,8 @@ const char* MQTT_BROKER = "broker.hivemq.com";
 const int   MQTT_PORT   = 1883;
 const char* NODE_ID     = "alpha-001";
 
-String DATA_TOPIC   = "aqms/" + String(NODE_ID) + "/data";
-String STATUS_TOPIC = "aqms/" + String(NODE_ID) + "/status";
+String DATA_TOPIC   = "plms/" + String(NODE_ID) + "/data";
+String STATUS_TOPIC = "plms/" + String(NODE_ID) + "/status";
 
 // ── DHT ────────────────────────────
 #define DHTPIN 2
@@ -52,7 +52,7 @@ void connectWifi() {
 void connectMQTT() {
   while (!mqtt.connected()) {
     // [FIX-1] Unique ID prevents broker rejecting "already connected" client
-    String clientId = "aqms-" + String(NODE_ID) + "-" + String(random(0xFFFF), HEX);
+    String clientId = "plms-" + String(NODE_ID) + "-" + String(random(0xFFFF), HEX);
     if (mqtt.connect(clientId.c_str())) {
       Serial.println("[MQTT] Connected as " + clientId);
       // [FIX-2] Publish retained "online" so backend always knows state
